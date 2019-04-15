@@ -1,14 +1,14 @@
 from pandas import DataFrame, read_csv, to_datetime
 from datetime import datetime
-import time, sys
+import time, sys, os
 
-config = read_csv('config.txt', sep=",")
+work_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Get the timesheet file path
-timesheet_file = config['timesheet_file'][0]
+timesheet_file = work_dir + r'\timesheet.csv'
 
 # Read project list
-projects = read_csv(config['projects_file'][0])
+projects = read_csv(work_dir + r'\projects.csv')
 
 # Last record
 timesheet = read_csv(timesheet_file)

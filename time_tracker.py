@@ -13,7 +13,7 @@ projects = read_csv(config['projects_file'][0])
 # Last record
 timesheet = read_csv(timesheet_file)
 last_record = timesheet.tail(1)
-last_task = last_record.task.tolist()[0] # Same as previous task (If user entered blank)
+last_task = last_record.task.tolist()[0]
 last_project = last_record.project.tolist()[0]
 
 # Today
@@ -27,7 +27,7 @@ def list_projects():
 	return print('\n'.join(projects_list))
 
 def record_task(current_task, project_id):
-	current_task = str(current_task) if current_task != '' else last_task
+	current_task = str(current_task) if current_task != '' else last_task # Same as previous task (If user entered blank)
 	project = projects[projects.id == int(project_id)]['project'].tolist()[0] if project_id != '' else last_project
 	# Generate task record dataframe
 	ts = DataFrame({
@@ -56,13 +56,10 @@ def generate_report(timesheet):
 	timesheet[['date','project','hours','task']].to_csv('timesheet_report_'+str(start.strftime('%d-%m-%Y'))+'.csv', index=False)
 	return str(start.strftime('%d-%m-%Y'))
 
-# Get user's choice
+
 task_msg = """
 ######################
 Enter current task: """
-
-project_msg = "Select project: "
-
 
 choice = sys.argv[1] if len(sys.argv) > 1 else 'task'
 while choice != '':
@@ -73,10 +70,10 @@ while choice != '':
 		# Enter current task
 		print('Time now:',time.strftime("%H:%M",time.localtime(now)))
 		print('Last task:',last_task)
-		print('Last project:',last_project)
+		print('Last project:',last_project)		
 		current_task = input(task_msg)		
 		list_projects()		
-		project_id = input(project_msg)
+		project_id = input("Select project: ")
 		record_task(current_task, project_id)
 
 	choice = ''

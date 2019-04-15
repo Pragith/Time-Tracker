@@ -1,16 +1,25 @@
 from pandas import DataFrame, read_csv, to_datetime
 from datetime import datetime
-import time, sys, os
+import time, sys, os, argparse, pendulum
 
+# Get report related arguments from the command line
+parser = argparse.ArgumentParser()
+parser.add_argument("-sd","--start_date", help="Enter date in YYYYMMDD format ONLY!", type=str)
+parser.add_argument("-ed","--end_date", help="Enter date in YYYYMMDD format ONLY!", type=str)
+parser.add_argument("-r","--report", help="Just leave it blank and current week's report will be generated", action='store_true')
+#parser.add_argument("-ws","--week_start", help="Enter date in YYYYMMDD format ONLY!", type=str)
+args = vars(parser.parse_args())
+
+# Automatically retrieve the working directory
 work_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Get the timesheet file path
 timesheet_file = work_dir + r'\timesheet.csv'
 
-# Read project list
+# Read the projects list
 projects = read_csv(work_dir + r'\projects.csv')
 
-# Last record
+# Get the last record in the timesheet
 timesheet = read_csv(timesheet_file)
 last_record = timesheet.tail(1)
 last_task = last_record.task.tolist()[0]
@@ -40,32 +49,34 @@ def record_task(current_task, project_id):
 	ts.to_csv(timesheet_file, header=False, mode='a', index=False)
 
 def generate_report(timesheet):
-	import pendulum
-	today = pendulum.now()
-	#today = pendulum.datetime(2019, 4, 14, tz='America/Toronto')
-	start = to_datetime(today.start_of('week').strftime('%Y-%m-%d'))
-	today = to_datetime(today.strftime('%Y-%m-%d'))
-
+	# Calculate the start and end dates of reports dynamically
+	end = pendulum.now()	
+	start = to_datetime(args['start_date']) if args['start_date'] else to_datetime(end.start_of('week').strftime('%Y-%m-%d'))
+	end = to_datetime(args['end_date']) if args['end_date'] else to_datetime(end.strftime('%Y-%m-%d'))	
 	timesheet['date'] = to_datetime(timesheet['date'])
-	timesheet = timesheet[(timesheet['date'] >= start) & (timesheet['date'] <= today)]
+	timesheet = timesheet[(timesheet['date'] >= start) & (timesheet['date'] <= end)]
 
+	# Calculate efforts by day, project and task.
 	timesheet = timesheet.groupby(['date','project','task'], group_keys=False).agg({'time':'count'}).reset_index()
 	timesheet['hours'] = timesheet['time'] / 4
 	timesheet['task'] = timesheet['task'].map(str) + ' (' + timesheet['hours'].map(lambda x: str(int(x)) if x.is_integer() else str(x)) + ')' 
 
-	timesheet[['date','project','hours','task']].to_csv('timesheet_report_'+str(start.strftime('%d-%m-%Y'))+'.csv', index=False)
-	return str(start.strftime('%d-%m-%Y'))
+	# Write the report to CSV
+	if not os.path.exists('reports'):
+		os.makedirs('reports')
+	timesheet[['date','project','hours','task']].to_csv('reports/timesheet report - '+str(start.strftime('%d-%b-%Y'))+' to '+str(end.strftime('%d-%b-%Y'))+'.csv', index=False)
+	
+	print("Report generated for dates between {0} and {1}".format(start, end))
 
 
 task_msg = """
 ######################
 Enter current task: """
-
-choice = sys.argv[1] if len(sys.argv) > 1 else 'task'
+choice = 'report' if (args['report'] or args['start_date']) else 'task'
 while choice != '':
 	if choice == 'report':
-		# Generate this week in review report		
-		print("Report generated for week:",generate_report(timesheet))
+		# Generate this week in review report
+		generate_report(timesheet)		
 	else:
 		# Enter current task
 		print('Time now:',time.strftime("%H:%M",time.localtime(now)))

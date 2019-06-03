@@ -68,6 +68,7 @@ def generate_report():
 	if not os.path.exists('reports'):
 		os.makedirs(work_dir + r'\reports')
 	timesheet[['date','project','hours','task']].to_csv('reports/timesheet report - '+str(start.strftime('%d-%b-%Y'))+' to '+str(end.strftime('%d-%b-%Y'))+'.csv', index=False)
+	timesheet[['date','project','hours','task']].to_csv('reports/timesheet report - latest.csv', index=False)
 	
 	print("Report generated for dates between {0} and {1}".format(start, end))
 

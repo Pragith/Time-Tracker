@@ -1,3 +1,4 @@
-timesheet.csv
-projects.csv
+./timesheet.csv
+./projects.csv
+./last_record.csv
 reports/

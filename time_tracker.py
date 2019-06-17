@@ -60,7 +60,7 @@ def generate_report():
 	timesheet = timesheet[(timesheet['date'] >= start) & (timesheet['date'] <= end)]
 
 	# Calculate efforts by day, project and task.
-	timesheet = timesheet.groupby(['date','project','task'], group_keys=False).agg({'time':'count'}).reset_index()
+	timesheet = timesheet.groupby(['project','date','task'], group_keys=False).agg({'time':'count'}).reset_index()
 	timesheet['hours'] = timesheet['time'] / 4
 	timesheet['task'] = timesheet['task'].map(str) + ' (' + timesheet['hours'].map(lambda x: str(int(x)) if x.is_integer() else str(x)) + ')' 
 
